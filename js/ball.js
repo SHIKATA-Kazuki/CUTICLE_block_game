@@ -51,4 +51,22 @@ class Ball {
     ctx.fill();
     ctx.restore();
   }
+
+  /**
+   * 既存のボールと同じ位置・速さから、角度だけ変えた新しいボールを作る。
+   * マルチボール（分身）アイテムで使用する。
+   * @param {number} angleOffset ラジアン。正で右寄り、負で左寄りに角度がずれる。
+   */
+  cloneWithAngleOffset(angleOffset) {
+    const clone = new Ball(this.canvasWidth, this.canvasHeight);
+    clone.x = this.x;
+    clone.y = this.y;
+
+    const speed = Math.hypot(this.vx, this.vy);
+    const currentAngle = Math.atan2(this.vy, this.vx);
+    const newAngle = currentAngle + angleOffset;
+    clone.vx = speed * Math.cos(newAngle);
+    clone.vy = speed * Math.sin(newAngle);
+    return clone;
+  }
 }

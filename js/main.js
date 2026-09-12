@@ -16,8 +16,12 @@ class Game {
     this.overlayTitle = document.getElementById('overlay-title');
     this.overlayMessage = document.getElementById('overlay-message');
     this.overlayButton = document.getElementById('overlay-button');
+    this.overlayDefaultMessage = this.overlayMessage.innerHTML;
 
     this.overlayButton.addEventListener('click', () => this._start());
+
+    this.selectedPatternId = DEFAULT_PATTERN_ID;
+    this._buildPatternSelectUI();
 
     this._loopBound = this._loop.bind(this);
 
@@ -25,10 +29,51 @@ class Game {
     this._draw(); // スタート前の初期画面を1回描画しておく
   }
 
+  // ----------------------------------------------------------
+  // ブロックの絵柄（パターン）選択UI
+  // ----------------------------------------------------------
+  _buildPatternSelectUI() {
+    const list = document.getElementById('pattern-list');
+    list.innerHTML = '';
+
+    Blocks.getPatternIds().forEach((patternId) => {
+      const option = document.createElement('div');
+      option.className = 'pattern-option';
+      if (patternId === this.selectedPatternId) option.classList.add('selected');
+
+      const img = document.createElement('img');
+      img.src = Blocks.renderThumbnail(patternId, 64);
+      img.alt = Blocks.getPatternName(patternId);
+
+      const label = document.createElement('span');
+      label.textContent = Blocks.getPatternName(patternId);
+
+      option.appendChild(img);
+      option.appendChild(label);
+
+      option.addEventListener('click', () => {
+        this.selectedPatternId = patternId;
+        list.querySelectorAll('.pattern-option').forEach((el) => el.classList.remove('selected'));
+        option.classList.add('selected');
+        // まだプレイ中でなければ、選び直した絵柄をすぐプレビューに反映する
+        if (!this.running) {
+          this._resetState();
+          this._draw();
+        }
+      });
+
+      list.appendChild(option);
+    });
+  }
+
+  // ----------------------------------------------------------
+  // 状態管理
+  // ----------------------------------------------------------
   _resetState() {
     this.paddle = new Paddle(this.canvas.width, this.canvas.height);
-    this.ball = new Ball(this.canvas.width, this.canvas.height);
-    this.blocks = Blocks.buildLevel(this.canvas.width);
+    this.balls = [new Ball(this.canvas.width, this.canvas.height)];
+    this.items = [];
+    this.blocks = Blocks.buildLevel(this.canvas.width, this.selectedPatternId);
     this.score = 0;
     this.lives = CONFIG.INITIAL_LIVES;
     this.running = false;
@@ -54,6 +99,9 @@ class Game {
     this.livesEl.textContent = `LIVES: ${this.lives}`;
   }
 
+  // ----------------------------------------------------------
+  // メインループ
+  // ----------------------------------------------------------
   _loop() {
     if (!this.running) return;
     this._update();
@@ -64,16 +112,19 @@ class Game {
   _update() {
     const direction = this.input.getDirection();
     this.paddle.update(direction);
-    this.ball.update();
 
-    this._handlePaddleCollision();
-    this._handleBlockCollisions();
-    this._handleMiss();
+    for (const ball of this.balls) {
+      ball.update();
+      this._handlePaddleCollision(ball);
+      this._handleBlockCollisions(ball);
+    }
+
+    this._updateItems();
+    this._handleMissedBalls();
     this._handleClear();
   }
 
-  _handlePaddleCollision() {
-    const ball = this.ball;
+  _handlePaddleCollision(ball) {
     const paddle = this.paddle;
     // 上向き（跳ね返り直後）に当たり判定を取らないよう、下降中のみ判定する
     if (ball.vy <= 0) return;
@@ -91,8 +142,7 @@ class Game {
     ball.vy = -Math.abs(speed * Math.cos(angle));
   }
 
-  _handleBlockCollisions() {
-    const ball = this.ball;
+  _handleBlockCollisions(ball) {
     for (const block of this.blocks) {
       if (!block.alive) continue;
       if (!this._circleRectCollide(ball, block)) continue;
@@ -103,6 +153,9 @@ class Game {
       if (block.hp <= 0) {
         block.alive = false;
         this.score += block.score;
+        if (block.isItem) {
+          this._spawnItem(block, 'multiball');
+        }
       } else {
         this.score += Math.floor(block.score / 2); // 削っただけでも少し加点
       }
@@ -111,9 +164,78 @@ class Game {
     }
   }
 
-  _handleMiss() {
-    if (this.ball.y - this.ball.radius <= this.canvas.height) return;
+  // ----------------------------------------------------------
+  // アイテム（★ブロックから落ちてくるもの）
+  // ----------------------------------------------------------
+  _spawnItem(block, type) {
+    const cx = block.x + block.width / 2;
+    const cy = block.y + block.height / 2;
+    this.items.push(new Item(cx, cy, type));
+  }
 
+  _updateItems() {
+    const paddle = this.paddle;
+    const remaining = [];
+
+    for (const item of this.items) {
+      item.update();
+
+      const caught =
+        item.y + item.height >= paddle.y &&
+        item.y <= paddle.y + paddle.height &&
+        item.x + item.width >= paddle.x &&
+        item.x <= paddle.x + paddle.width;
+
+      if (caught) {
+        this._applyItemEffect(item.type);
+        continue; // このアイテムは消える
+      }
+
+      if (item.y > this.canvas.height) {
+        continue; // 取れずに画面外へ落ちた（消える。ペナルティ無し）
+      }
+
+      remaining.push(item);
+    }
+
+    this.items = remaining;
+  }
+
+  _applyItemEffect(type) {
+    if (type === 'multiball') {
+      this._spawnMultiball();
+    }
+  }
+
+  // 今あるボール1つにつき2つ複製して、合計3倍に増やす（上限あり）
+  _spawnMultiball() {
+    const sourceBalls = this.balls.slice();
+    const newBalls = [];
+
+    for (const ball of sourceBalls) {
+      if (this.balls.length + newBalls.length >= CONFIG.MAX_BALLS) break;
+      newBalls.push(ball.cloneWithAngleOffset(Math.PI / 8));
+      if (this.balls.length + newBalls.length >= CONFIG.MAX_BALLS) break;
+      newBalls.push(ball.cloneWithAngleOffset(-Math.PI / 8));
+    }
+
+    this.balls = this.balls.concat(newBalls);
+  }
+
+  // ----------------------------------------------------------
+  // ミス・クリア判定
+  // ----------------------------------------------------------
+  _handleMissedBalls() {
+    const survivors = this.balls.filter((ball) => ball.y - ball.radius <= this.canvas.height);
+
+    if (survivors.length === this.balls.length) return; // どのボールも落ちていない
+    if (survivors.length > 0) {
+      // まだ他のボールが残っているので、ライフは減らさない
+      this.balls = survivors;
+      return;
+    }
+
+    // 全部のボールが画面外に落ちた
     this.lives -= 1;
     this._updateHud();
 
@@ -121,8 +243,8 @@ class Game {
       this.running = false;
       this._showResult('ゲームオーバー', `スコア ${this.score} でした`);
     } else {
-      this.ball.reset();
       this.paddle.reset(this.canvas.width);
+      this.balls = [new Ball(this.canvas.width, this.canvas.height)];
     }
   }
 
@@ -156,6 +278,9 @@ class Game {
     }
   }
 
+  // ----------------------------------------------------------
+  // 描画
+  // ----------------------------------------------------------
   _draw() {
     const ctx = this.ctx;
     const w = this.canvas.width;
@@ -178,8 +303,16 @@ class Game {
     for (const block of this.blocks) {
       if (block.alive) Blocks.drawBlock(ctx, block);
     }
+
+    for (const item of this.items) {
+      item.draw(ctx);
+    }
+
     this.paddle.draw(ctx);
-    this.ball.draw(ctx);
+
+    for (const ball of this.balls) {
+      ball.draw(ctx);
+    }
   }
 }
 
