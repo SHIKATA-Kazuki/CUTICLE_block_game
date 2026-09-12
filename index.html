@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>ブロック崩し</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="game-wrap">
+    <div id="hud">
+      <span id="score">SCORE: 0</span>
+      <span id="lives">LIVES: 3</span>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <div id="overlay">
+      <p id="overlay-title">ブロック崩し</p>
+      <p id="overlay-message">画面の右半分タップで右へ、左半分タップで左へ。<br>押しっぱなしで動き続けます。</p>
+      <button id="overlay-button">タップしてスタート</button>
+    </div>
+  </div>
+
+  <!-- 読み込み順が重要（設定→ブロック→パドル→ボール→入力→本体） -->
+  <script src="js/config.js"></script>
+  <script src="js/blocks.js"></script>
+  <script src="js/paddle.js"></script>
+  <script src="js/ball.js"></script>
+  <script src="js/input.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
