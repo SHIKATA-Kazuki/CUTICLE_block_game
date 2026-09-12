@@ -17,16 +17,23 @@
 
     <div id="overlay">
       <p id="overlay-title">ブロック崩し</p>
-      <p id="overlay-message">画面の右半分タップで右へ、左半分タップで左へ。<br>押しっぱなしで動き続けます。</p>
+      <p id="overlay-message">画面の右半分タップで右へ、左半分タップで左へ。<br>押しっぱなしで動き続けます。<br>★マーク付きのブロックを壊すとアイテムが出現。<br>パドルで受け止めるとボールが3つに増えます。</p>
+
+      <div id="pattern-select">
+        <p id="pattern-select-label">ブロックの絵柄</p>
+        <div id="pattern-list"></div>
+      </div>
+
       <button id="overlay-button">タップしてスタート</button>
     </div>
   </div>
 
-  <!-- 読み込み順が重要（設定→ブロック→パドル→ボール→入力→本体） -->
+  <!-- 読み込み順が重要（設定→ブロック→パドル→ボール→アイテム→入力→本体） -->
   <script src="js/config.js"></script>
   <script src="js/blocks.js"></script>
   <script src="js/paddle.js"></script>
   <script src="js/ball.js"></script>
+  <script src="js/items.js"></script>
   <script src="js/input.js"></script>
   <script src="js/main.js"></script>
 </body>

@@ -1,0 +1,142 @@
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #06090f;
+  overflow: hidden;
+  touch-action: none; /* スマホでのスクロール・ピンチズームを防止 */
+  overscroll-behavior: none;
+  font-family: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+
+#game-wrap {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+#hud {
+  width: 100%;
+  max-width: 400px;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 14px;
+  color: #e6ecf5;
+  font-size: 15px;
+  letter-spacing: 0.03em;
+}
+
+#gameCanvas {
+  background: #0d1b2a;
+  border-radius: 10px;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 12px 30px rgba(0, 0, 0, 0.45);
+  touch-action: none;
+  max-width: 92vw;
+  max-height: 78vh;
+  width: auto;
+  height: auto;
+}
+
+#overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 32px;
+  text-align: center;
+  background: rgba(6, 9, 15, 0.88);
+  color: #f1faee;
+  overflow-y: auto;
+  touch-action: pan-y;
+}
+
+#overlay.hidden {
+  display: none;
+}
+
+#overlay-title {
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0;
+}
+
+#overlay-message {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #b8c4d6;
+  margin: 0;
+  max-width: 300px;
+}
+
+#pattern-select {
+  width: 100%;
+  max-width: 320px;
+}
+
+#pattern-select-label {
+  margin: 0 0 8px;
+  font-size: 13px;
+  color: #8fa0b8;
+  letter-spacing: 0.05em;
+}
+
+#pattern-list {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.pattern-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 2px solid transparent;
+  border-radius: 12px;
+  cursor: pointer;
+  color: #d7e0ee;
+  font-size: 12px;
+}
+
+.pattern-option img {
+  width: 64px;
+  height: 64px;
+  border-radius: 8px;
+  display: block;
+}
+
+.pattern-option.selected {
+  border-color: #ffd166;
+  background: rgba(255, 209, 102, 0.12);
+}
+
+#overlay-button {
+  margin-top: 8px;
+  padding: 12px 28px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #06090f;
+  background: #ffd166;
+  border: none;
+  border-radius: 999px;
+  cursor: pointer;
+}
+
+#overlay-button:active {
+  transform: scale(0.97);
+}
